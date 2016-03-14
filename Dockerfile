@@ -64,18 +64,23 @@ RUN cd /usr/local/src/php/php-$PHPVERSION/; \
     --with-pear \
     --with-fpm-user=www-data \
     --with-fpm-group=www-data \
-    --with-config-file-path=/etc/php7/ \
-    --with-config-file-scan-dir=/etc/php7/conf.d/ \
+    --with-config-file-path=/usr/local/etc/php/ \
+    --with-config-file-scan-dir=/usr/local/etc/php/conf.d/ \
     --with-libdir=lib/x86_64-linux-gnu
 
 RUN cd /usr/local/src/php/php-$PHPVERSION; \
     make; \
     make install
 
-ADD php-fpm.conf /usr/local/etc/php-fpm.conf 
-ADD www.conf /usr/local/etc/php-fpm.d/www.conf 
-RUN useradd www-data
+RUN mkdir -p /usr/local/etc/php/conf.d/ && \
+    mkdir -p /usr/local/etc/php/php-fpm.d/ && \
+    cp /usr/local/src/php/php-$PHPVERSION/php.ini-production /usr/local/etc/php/php.ini
+
+COPY php-fpm.conf /usr/local/etc/php-fpm.conf 
+COPY www.conf /usr/local/etc/php/php-fpm.d/www.conf
+
+RUN adduser www-data
 
 EXPOSE 9000
 
-CMD /usr/local/sbin/php-fpm
+CMD ["/usr/local/sbin/php-fpm","-R","-c","/usr/local/etc/php/php.ini","-y","/usr/local/etc/php-fpm.conf"]
